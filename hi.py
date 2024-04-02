@@ -1,1 +1,0 @@
-print("Aai chya gavat")
