@@ -1,0 +1,1 @@
+print("Aai chya gavat")
