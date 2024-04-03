@@ -4,8 +4,9 @@
     font-family:sans-serif; 
 }
 header{
-    /* background-image: url('{% static/images/logo.jpg %}'); */
-    background-color: rgb(56, 56, 175);
+    background-image: url(images/background.jpg);
+    background-size: 100%;
+    /* background-color: rgb(56, 56, 175); */
     background-size: cover;
     height: 100vh;
     background-position: center;
