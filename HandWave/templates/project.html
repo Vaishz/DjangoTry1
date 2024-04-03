@@ -78,7 +78,6 @@
             canvasElement.width = videoElement.videoWidth;
             canvasElement.height = videoElement.videoHeight;
             canvasElement.getContext("2d").drawImage(videoElement, 0, 0);
-            const capturedImageElement = document.createElement("img");
             capturedImageElement.src = canvasElement.toDataURL("image/jpeg");
             capturedImageElement.style.display = "block";
             
@@ -94,18 +93,23 @@
             detectionResultElement.textContent = "Detected: Sign A";
         }
         
+        // Event listener for capture button click
+        captureButton.addEventListener("click", captureImage);
+        
         // Event listener for camera selection change
         cameraSelect.addEventListener("change", async () => {
             // Stop the current stream
             if (stream) {
                 stream.getTracks().forEach(track => track.stop());
             }
-            // Start camera with the selected device
-            startCamera();
-        });
-        
-        // Start camera when the page loads
-        window.onload = startCamera;
+
+            const maxAbsValue = Math.max(...normalizedLandmarks.map(Math.abs));
+            const normalizedLandmarksArray = normalizedLandmarks.map(value => value / maxAbsValue);
+
+            return normalizedLandmarksArray;
+        }
+
+        main();
     </script>
 </body>
 </html>

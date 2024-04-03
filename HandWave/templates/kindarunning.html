@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hand Sign Detection</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+
+        #container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        video {
+            transform: scaleX(-1);
+        }
+
+        #predictedText {
+            margin-top: 20px;
+            font-size: 20px;
+        }
+
+        #predictionDisplay {
+            margin-top: 20px;
+            font-size: 24px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div class="cap">
+            <select id="cameraSelect"></select>
+            <br>
+            <video id="webCam" margin: 10px autoplay playsinline width="600" height="450"></video>
+            <canvas id="canvas" margin: 10px width="600" height="450" transform: scaleX(-1)></canvas>
+        </div>
+        <p id="predictedText">Predicted:</p>
+        <p id="predictionDisplay"></p>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/handpose"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/detection"></script>
+    <script>
+        const webCamElement = document.getElementById("webCam");
+        const canvasElement = document.getElementById("canvas");
+        const predictedTextElement = document.getElementById("predictedText");
+        const predictionDisplayElement = document.getElementById("predictionDisplay");
+
+        let stream;
+        let model;
+
+        async function startCamera() {
+            try {
+                const constraints = {
+                    video: { width: 600, height: 450, facingMode: "user" }
+                };
+                stream = await navigator.mediaDevices.getUserMedia(constraints);
+                webCamElement.srcObject = stream;
+            } catch (err) {
+                console.error("Error accessing webcam:", err);
+            }
+        }
+
+        async function loadModel() {
+            try {
+                model = await tf.loadLayersModel('/static/model/model.h5');
+                // Do any initialization with the loaded model here
+            } catch (err) {
+                console.error('Error loading TensorFlow.js model:', err);
+            }
+        }
+
+        async function predictHandSign(imageData) {
+            try {
+                // Normalize the image data
+                const tensor = tf.browser.fromPixels(imageData).toFloat().div(tf.scalar(255));
+
+                // Reshape the input data to match the model's input shape
+                const reshapedTensor = tensor.reshape([1, imageData.height, imageData.width, 3]);
+
+                // Perform prediction using the model
+                const predictions = await model.predict(reshapedTensor);
+
+                // Process the predictions to extract meaningful information
+                // For example, find the index of the highest probability class
+                const predictedClassIndex = predictions.argMax(1).dataSync()[0];
+
+                // Get the class label based on the index
+                const classLabels = ['Class 0', 'Class 1', 'Class 2']; // Example class labels
+                const predictedClassLabel = classLabels[predictedClassIndex];
+
+                // Update the UI with the predicted class label
+                predictedTextElement.textContent = 'Predicted:';
+
+                // Display the predicted class label as HTML text on the screen
+                predictionDisplayElement.innerHTML = `<span style="color: green;">${predictedClassLabel}</span>`;
+
+                // Dispose tensors to release memory
+                tensor.dispose();
+                reshapedTensor.dispose();
+                predictions.dispose();
+            } catch (err) {
+                console.error('Error predicting hand sign:', err);
+            }
+        }
+
+        async function detectHand() {
+            const context = canvasElement.getContext('2d');
+            context.drawImage(webCamElement, 0, 0, canvasElement.width, canvasElement.height);
+            const imageData = context.getImageData(0, 0, canvasElement.width, canvasElement.height);
+            predictHandSign(imageData);
+        }
+
+        window.onload = async function () {
+            await startCamera();
+            await loadModel();
+            setInterval(detectHand, 1000);
+        };
+    </script>
+</body>
+</html>

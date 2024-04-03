@@ -10,3 +10,9 @@ def reviews(request):
 
 def project(request):
     return render(request, "project.html")
+
+def vaish(request):
+    return render(request, "vaish.html")
+
+def kinda(request):
+    return render(request, "kindarunning.html")
