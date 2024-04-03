@@ -3,7 +3,7 @@
     padding: 0;
     font-family:sans-serif; 
 }
-header{
+body{
     /* background-image: url('{% static/images/logo.jpg %}'); */
     background-color: rgb(56, 56, 175);
     background-size: cover;
@@ -53,4 +53,47 @@ ul li.active a{
     max-width: 1200px;
     margin: auto;
 
+}
+
+.review{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    top: 5%;
+    width: 98%;
+    margin: 10px;
+}
+
+
+.review .box-container{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(30rem, 1fr));
+    gap: 1.5rem;
+}
+.review .box-container .box{
+    border: white 1px;
+    text-align: center;
+    padding: 2rem 1rem;
+}
+.review .box-container .box p{
+    font-size: 1.3rem;
+    line-height: 1.8;
+    color: black;
+    padding: 2rem 0;
+}
+.review .box-container .box .user{
+    height: 8rem;
+    width: 8rem;
+    border-radius: 50%;
+    object-fit: cover;
+}
+.review .box-container .box h3{
+    padding: 1rem 0;
+    font-size: 2rem;
+    columns: var(--black);
+}
+.review .box-container .box .stars i{
+    font-size: 1.5rem;
+    color: var(--main-color);
 }
