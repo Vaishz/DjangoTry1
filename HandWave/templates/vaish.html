@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sign Language Detection</title>
+</head>
+<body>
+    <h1>Sign Language Detection</h1>
+    <div>
+        <label for="camera-select">Select Camera:</label>
+        <select id="camera-select"></select>
+    </div>
+    <video id="video" width="640" height="480" autoplay></video>
+    <canvas id="canvas" width="640" height="480" style="display:none;"></canvas>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const context = canvas.getContext('2d');
+
+        // Populate dropdown with available cameras
+        async function populateCameraDropdown() {
+            const cameras = await navigator.mediaDevices.enumerateDevices();
+            const cameraSelect = document.getElementById('camera-select');
+
+            cameras.forEach((device) => {
+                if (device.kind === 'videoinput') {
+                    const option = document.createElement('option');
+                    option.value = device.deviceId;
+                    option.text = device.label || `Camera ${cameraSelect.options.length + 1}`;
+                    cameraSelect.appendChild(option);
+                }
+            });
+
+            cameraSelect.addEventListener('change', async (event) => {
+                const selectedDeviceId = event.target.value;
+                await setupCamera(selectedDeviceId);
+            });
+        }
+
+        // Access the webcam
+        async function setupCamera(deviceId) {
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                const videoConstraints = {
+                    video: {
+                        deviceId: { exact: deviceId }
+                    }
+                };
+        
+                const stream = await navigator.mediaDevices.getUserMedia(videoConstraints);
+                video.srcObject = stream;
+                return new Promise(resolve => {
+                    video.onloadedmetadata = () => {
+                        resolve(video);
+                    };
+                });
+            } else {
+                alert('Camera not supported');
+            }
+        }
+
+        // Start camera and run prediction
+        async function init() {
+            await populateCameraDropdown();
+            await setupCamera();
+            video.play();
+            detectSign();
+        }
+        // Function to detect sign language
+        async function detectSign() {
+            const model = await tf.loadLayersModel('/static/model/model.h5');
+            const alphabet = ['0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z']; // Define your alphabet
+
+            const hands = new Hands({
+                locateFile: (file) => {
+                    return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+                }
+            });
+            hands.setOptions({
+                maxNumHands: 2,
+                minDetectionConfidence: 0.5,
+                minTrackingConfidence: 0.5
+            });
+
+            hands.onResults((results) => {
+                if (results.multiHandLandmarks && results.multiHandedness) {
+                    for (let i = 0; i < results.multiHandLandmarks.length; i++) {
+                        const handLandmarks = results.multiHandLandmarks[i];
+                        const handedness = results.multiHandedness[i];
+
+                        const landmarkList = calcLandmarkList(handLandmarks, video);
+                        const preProcessedLandmarkList = preProcessLandmark(landmarkList);
+                        const df = tf.tensor2d(preProcessedLandmarkList);
+                        const predictions = model.predict(df);
+                        const predictedClass = predictions.argMax().dataSync()[0];
+                        const label = alphabet[predictedClass];
+                        console.log(label);
+                        // Draw landmarks and label on canvas
+                    }
+                }
+            });
+
+            const camera = await setupCamera();
+            camera.play();
+
+            // Start hand detection
+            hands.send({ image: video });
+        }
+
+        function calcLandmarkList(landmarks, image) {
+            const imageWidth = image.width;
+            const imageHeight = image.height;
+            const landmarkPoint = [];
+
+            for (const landmark of landmarks) {
+                const landmarkX = Math.min(Math.floor(landmark.x * imageWidth), imageWidth - 1);
+                const landmarkY = Math.min(Math.floor(landmark.y * imageHeight), imageHeight - 1);
+                landmarkPoint.push([landmarkX, landmarkY]);
+            }
+            return landmarkPoint;
+        }
+
+        function preProcessLandmark(landmarkList) {
+            let tempLandmarkList = [...landmarkList];
+            const baseX = tempLandmarkList[0][0];
+            const baseY = tempLandmarkList[0][1];
+
+            tempLandmarkList = tempLandmarkList.map(([x, y]) => [(x - baseX), (y - baseY)]);
+
+            const maxAbsValue = Math.max(...tempLandmarkList.flat().map(Math.abs));
+            tempLandmarkList = tempLandmarkList.map(([x, y]) => [x / maxAbsValue, y / maxAbsValue]);
+            return tempLandmarkList.flat();
+        }
+
+        // Run the initialization function
+        init();
+    </script>
+</body>
+</html>
