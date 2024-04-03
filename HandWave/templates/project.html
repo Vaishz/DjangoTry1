@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hand Gesture Recognition</title>
+</head>
+<body>
+    <h1>Hand Gesture Recognition</h1>
+    <video id="webcam" autoplay></video>
+    <canvas id="outputCanvas" width="640" height="480"></canvas>
+    <div id="prediction"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands"></script>
+    <script>
+        async function main() {
+            // Load the TensorFlow.js model
+            const model = await tf.loadLayersModel('static/model/model.json');
+
+            // Initialize MediaPipe hands model
+            const hands = new Hands();
+            await hands.setOptions({
+                maxNumHands: 2,
+                minDetectionConfidence: 0.5,
+                minTrackingConfidence: 0.5
+            });
+            await hands.initialize();
+
+            const webcamElement = document.getElementById('webcam');
+            const canvasElement = document.getElementById('outputCanvas');
+            const predictionElement = document.getElementById('prediction');
+
+            // Get webcam feed
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            webcamElement.srcObject = stream;
+
+            hands.onResults(handleHandResults);
+            hands.send({ image: webcamElement });
+
+            function handleHandResults(results) {
+                const canvasCtx = canvasElement.getContext('2d');
+                canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+                canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
+                if (results.multiHandLandmarks) {
+                    for (const landmarks of results.multiHandLandmarks) {
+                        drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS, { color: '#00FF00', lineWidth: 5 });
+                        drawLandmarks(canvasCtx, landmarks, { color: '#FF0000', lineWidth: 2 });
+
+                        const gesture = recognizeGesture(landmarks);
+                        predictionElement.textContent = 'Predicted Gesture: ' + gesture;
+                    }
+                }
+                requestAnimationFrame(() => hands.send({ image: webcamElement }));
+            }
+        }
+
+        async function recognizeGesture(landmarks) {
+            const preProcessedLandmarkList = preprocessLandmarks(landmarks);
+            const tfLandmarks = tf.tensor2d([preProcessedLandmarkList]);
+            const predictions = model.predict(tfLandmarks).dataSync();
+            const alphabet = ['1', '2', '3', '4', '5', '6', '7', '8', '9'];
+            alphabet.push(...Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i)));
+            const predictedClassIndex = predictions.indexOf(Math.max(...predictions));
+            const predictedGesture = alphabet[predictedClassIndex];
+            return predictedGesture;
+        }
+
+        function preprocessLandmarks(landmarks) {
+            let baseX = 0;
+            let baseY = 0;
+            const normalizedLandmarks = [];
+
+            for (let i = 0; i < landmarks.length; i++) {
+                const landmark = landmarks[i];
+                const x = landmark.x;
+                const y = landmark.y;
+
+                if (i === 0) {
+                    baseX = x;
+                    baseY = y;
+                }
+
+                const normalizedX = x - baseX;
+                const normalizedY = y - baseY;
+                normalizedLandmarks.push(normalizedX, normalizedY);
+            }
+
+            const maxAbsValue = Math.max(...normalizedLandmarks.map(Math.abs));
+            const normalizedLandmarksArray = normalizedLandmarks.map(value => value / maxAbsValue);
+
+            return normalizedLandmarksArray;
+        }
+
+        main();
+    </script>
+</body>
+</html>
