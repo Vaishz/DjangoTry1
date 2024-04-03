@@ -1,43 +1,49 @@
-*{
+* {
     margin: 0;
     padding: 0;
-    font-family:sans-serif; 
+    font-family: sans-serif;
 }
-header{
+
+.main {
     background-image: url(images/background.jpg);
     background-size: cover;
     height: 100vh;
     background-position: center;
 }
-ul{
+
+ul {
     float: right;
     list-style-type: none;
     margin-top: 25px;
     position: absolute right;
 }
+
 ul li {
     display: inline-block;
     position: relative;
     right: 0px;
     top: 0px;
 }
-ul li a{
+
+ul li a {
     text-decoration: none;
     color: white;
     padding: 5px 20px;
     border: 1px solid transparent;
     transition: 0.6s ease;
 }
-ul li a:hover{
-background-color: white;
-color: black;
-}
-ul li.active a{
+
+ul li a:hover {
     background-color: white;
     color: black;
 }
 
-.logo img{
+ul li.active a {
+    background-color: white;
+    color: black;
+}
+
+.logo img {
     position: absolute;
     left: 2%;
     top: 2%;
@@ -46,15 +52,22 @@ ul li.active a{
     border-radius: 50%;
     width: 50px;
     height: 50px;
-    
 }
+
 .navigation {
     max-width: 1200px;
     margin: auto;
-
 }
 
-.review{
+.title {
+    color: white;
+    position: absolute;
+    font-size: 50px;
+    left: 570px;
+    top: 90px;
+}
+
+.review {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -64,35 +77,45 @@ ul li.active a{
     margin: 10px;
 }
 
-
-.review .box-container{
+.review .box-container {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(30rem, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
     gap: 1.5rem;
+    position: absolute;
+    top: 90px;
 }
-.review .box-container .box{
+
+.review .box-container .box {
     border: white 1px;
     text-align: center;
     padding: 2rem 1rem;
+    background-color: aliceblue;
+    border-radius: 10%;
+    margin-left: 10px;
+    height: 400px;
 }
-.review .box-container .box p{
+
+.review .box-container .box p {
     font-size: 1.3rem;
     line-height: 1.8;
     color: black;
     padding: 2rem 0;
 }
-.review .box-container .box .user{
+
+.review .box-container .box .user {
     height: 8rem;
     width: 8rem;
     border-radius: 50%;
     object-fit: cover;
 }
-.review .box-container .box h3{
+
+.review .box-container .box h3 {
     padding: 1rem 0;
     font-size: 2rem;
     columns: var(--black);
 }
-.review .box-container .box .stars i{
+
+.review .box-container .box .stars i {
     font-size: 1.5rem;
     color: var(--main-color);
 }
